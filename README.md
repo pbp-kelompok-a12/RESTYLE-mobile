@@ -36,16 +36,6 @@ Aplikasi ini memberikan manfaat nyata bagi masyarakat dengan mendorong penggunaa
 | **Modul 5: Fashion Community** | Salsabilla Hasan | Forum diskusi antarpengguna untuk berbagi inspirasi styling, mix & match, dan ide pakaian sehari-hari. | Membuat post baru (dengan foto), menambahkan komentar, memberikan like pada outfit pengguna lain | Melihat daftar post, detail post beserta komentar dan like | Mengubah post atau komentar milik sendiri | Menghapus post, komentar, atau like milik sendiri |
 | **Modul 6: Admin Panel (Moderasi Konten)** | Dikerjakan bersama (seluruh anggota kelompok) | Fitur moderasi yang memungkinkan Admin menjaga kualitas Fashion Community dengan melihat dan menghapus post/komentar yang melanggar aturan. | Admin membuat akun/hak akses admin dan mengelola konten melalui panel khusus | Admin melihat seluruh post dan komentar pengguna untuk keperluan moderasi | Admin meninjau dan menandai konten yang melanggar | Admin menghapus post/komentar pengguna lain yang melanggar |
 
-## Fitur tambahan community
-1. Search: mencari post atau pengguna berdasarkan teks, nama, atau item Digital Closet yang ditandai.
-2. Notifications: pemberitahuan untuk like, balasan, follow, dan mention.
-3. Saved posts: menyimpan post sebagai inspirasi dan melihatnya di halaman tersendiri.
-4. Follow dan profil pengguna: mengikuti pengguna, melihat profil, serta daftar followers/following.
-5. Tag item Digital Closet di post dan balasan.
-6. Mention @username: saran username, tautan mention, dan notifikasi mention.
-7. Foto pada balasan, selain foto di post.
-8. Foto profil khusus Community.
-
 ### ⁠Sumber/dokumentasi Public API yang dipakai
 Open-Meteo API
 
