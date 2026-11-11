@@ -1,1 +1,71 @@
-# RESTYLE-mobile
+## Kelompok 12-A
+
+### Anggota
+| Nama | NPM |
+|---|---|
+|Salwa Hafiza Aqila|2506624392|
+|Hasya Azzahra Rangkuti|2506617512|
+|Salsabilla Hasan|2506548660|
+|Aulia Nur Shiva|2506619316|
+|Fadly Atief Nauval|2506624940|
+
+### Deskripsi Aplikasi
+RE:STYLE :  Sustainable Digital Wardrobe Platform
+
+RE:STYLE adalah platform digital wardrobe yang dirancang untuk membantu pengguna, khususnya mahasiswa yang mengadopsi gaya hidup berkelanjutan melalui pengelolaan pakaian pribadi (slow fashion & conscious shopping). Di tengah maraknya tren fast fashion, kebiasaan membeli pakaian secara impulsif (impulsive buying) sering kali membuat lemari penuh, tapi kita tetap merasa tidak punya baju untuk dipakai. Banyak mahasiswa kesulitan mendata pakaian yang mereka miliki, bingung memadupadankan (mix & match) baju yang ada, atau tanpa sadar membeli pakaian baru yang modelnya mirip dengan yang sudah mereka punya. Hal ini berujung pada penumpukan limbah tekstil dan pemborosan uang.  
+
+Sebagai digital wardrobe assistant, RE:STYLE hadir untuk mengatasi masalah tersebut melalui beberapa fitur utama:  
+- Digital Closet (Wardrobe Management): Mendata dan mengelompokkan koleksi pakaian pribadi berdasarkan warna, kategori, gaya, hingga status ketersediaan (siap pakai atau sedang dicuci).  
+- Mix & Match Outfit Builder: Membantu pengguna merangkai kombinasi atasan, bawahan, sepatu, dan aksesori agar pakaian yang ada bisa dipakai secara maksimal.  
+- Weekly Outfit Planner: Mengatur jadwal pemakaian pakaian mingguan secara terstruktur agar tidak monoton, yang terintegrasi dengan data cuaca real-time (Open-Meteo API) untuk rekomendasi outfit harian yang sesuai kondisi cuaca.
+- Conscious Shopping Reminder: Memberikan pengingat otomatis saat pengguna mau membeli baju baru yang mirip dengan koleksi di lemari, untuk mencegah pembelian impulsif.  
+- Fashion Community: Ruang diskusi antarpengguna untuk saling berbagi inspirasi styling, mix and match, dan ide pakaian sehari-hari.
+
+Aplikasi ini memberikan manfaat nyata bagi masyarakat dengan mendorong penggunaan ulang (re-use) pakaian untuk menekan limbah tekstil fast fashion, membantu efisiensi finansial melalui kontrol pembelian impulsif, serta membangun kesadaran eco-mindfulness di lingkungan mahasiswa. 
+
+
+
+### Deskripsi Modul dan Pembagian Kerja
+
+| Modul | Penanggung Jawab | Deskripsi | Create | Read | Update | Delete |
+|---|---|---|---|---|---|---|
+| **Modul 1: Digital Closet (Wardrobe Management)** | Aulia Nur Shiva | Fitur inti untuk mengelola data pakaian pengguna, lengkap dengan filter berdasarkan warna, kategori, dan style. Kategori pakaian diisi/dipilih manual oleh pengguna (bukan deteksi otomatis via AI). | Menambah data pakaian baru (nama, kategori, warna, style, material, foto, status ketersediaan). Kategori dipilih manual dari dropdown | Melihat daftar pakaian, detail satu pakaian, serta memfilter berdasarkan warna/kategori | Mengubah data (mengedit) pakaian yang sudah ada | Menghapus data pakaian dari koleksi |
+| **Modul 2: Mix & Match Outfit Builder** | Salwa Hafiza Aqila | Fitur untuk merangkai kombinasi outfit dari pakaian yang ada di Digital Closet (atasan, bawahan, sepatu, aksesori). | Membuat kombinasi outfit baru dari pakaian yang tersedia | Melihat daftar outfit yang sudah dibuat beserta detail kombinasinya | Mengubah/mengganti item dalam suatu kombinasi outfit | Menghapus outfit yang sudah disimpan |
+| **Modul 3: Weekly Outfit Planner & Weather Recommendation** | Fadly Atief Nauval | Fitur untuk merencanakan pemakaian outfit per hari dalam kalender mingguan, terintegrasi Open-Meteo API untuk rekomendasi sesuai cuaca berdasarkan lokasi menggunakan OpenStreetMap dengan pengolahan datanya melalui Nominatim. Sistem otomatis mengecualikan pakaian berstatus "Laundry" dari pilihan. | Menambahkan jadwal outfit untuk hari/tanggal tertentu | Melihat jadwal mingguan serta rekomendasi outfit berdasarkan data cuaca real-time | Mengubah outfit yang dijadwalkan pada hari tertentu | Menghapus/membatalkan jadwal outfit pada hari tertentu |
+| **Modul 4: Conscious Shopping Reminder & Autentikasi** | Hasya Azzahra Rangkuti | Fitur wishlist interaktif untuk mencegah pembelian impulsif melalui pengingat *Conscious Shopping*. Sistem otomatis mendeteksi kemiripan barang di Digital Closet berdasarkan kategori dan warna (baik saat menambah item di Wishlist maupun saat menyimpan pakaian dari Community). Dilengkapi pop-up peringatan *Conscious Alert* ber-maskot bunglon, *deep-linking* terfilter langsung ke Closet, modal detail interaktif, serta sistem login/logout/autentikasi pengguna. | Menambah item wishlist (nama, foto, kategori, warna, bahan, *style tags*, *season*, *weather*, brand, harga, *purchase link*, *target purchase date*); registrasi akun baru; menambah item ke wishlist langsung dari Community. | Melihat daftar wishlist; statistik *Closest Matches*; modal *view detail* dengan *chip* barang mirip yang bisa diklik untuk *redirect* langsung ke Digital Closet; *filter bar* dinamis (*search*, warna, *style*, *season*, *weather*, *status*); pop-up pengingat *Conscious Alert*; login pengguna. | Mengubah data item wishlist melalui modal *edit* (beserta pembaruan foto dan format harga real-time). | Menghapus item wishlist melalui modal konfirmasi; membatalkan/menghapus item dari wishlist; logout pengguna. |
+| **Modul 5: Fashion Community** | Salsabilla Hasan | Forum diskusi antarpengguna untuk berbagi inspirasi styling, mix & match, dan ide pakaian sehari-hari. | Membuat post baru (dengan foto), menambahkan komentar, memberikan like pada outfit pengguna lain | Melihat daftar post, detail post beserta komentar dan like | Mengubah post atau komentar milik sendiri | Menghapus post, komentar, atau like milik sendiri |
+| **Modul 6: Admin Panel (Moderasi Konten)** | Dikerjakan bersama (seluruh anggota kelompok) | Fitur moderasi yang memungkinkan Admin menjaga kualitas Fashion Community dengan melihat dan menghapus post/komentar yang melanggar aturan. | Admin membuat akun/hak akses admin dan mengelola konten melalui panel khusus | Admin melihat seluruh post dan komentar pengguna untuk keperluan moderasi | Admin meninjau dan menandai konten yang melanggar | Admin menghapus post/komentar pengguna lain yang melanggar |
+
+## Fitur tambahan community
+1. Search: mencari post atau pengguna berdasarkan teks, nama, atau item Digital Closet yang ditandai.
+2. Notifications: pemberitahuan untuk like, balasan, follow, dan mention.
+3. Saved posts: menyimpan post sebagai inspirasi dan melihatnya di halaman tersendiri.
+4. Follow dan profil pengguna: mengikuti pengguna, melihat profil, serta daftar followers/following.
+5. Tag item Digital Closet di post dan balasan.
+6. Mention @username: saran username, tautan mention, dan notifikasi mention.
+7. Foto pada balasan, selain foto di post.
+8. Foto profil khusus Community.
+
+### ⁠Sumber/dokumentasi Public API yang dipakai
+Open-Meteo API
+
+### Jenis dan Peran Pengguna Aplikasi
+
+1. Pengguna (Mahasiswa)
+
+Pengguna utama RE:STYLE adalah mahasiswa yang ingin mengelola pakaian pribadi dan menerapkan gaya hidup yang lebih berkelanjutan. Pengguna dapat:
+
+* Mengelola koleksi pakaian pribadi melalui Digital Closet.
+* Membuat dan menyimpan kombinasi outfit melalui Mix & Match Outfit Builder.
+* Merencanakan penggunaan pakaian melalui Weekly Outfit Planner.
+* Mendapatkan pengingat saat mempertimbangkan pembelian pakaian yang serupa dengan koleksi yang sudah dimiliki.
+* Membagikan serta melihat inspirasi styling dari pengguna lain melalui Fashion Community.
+* Melihat informasi cuaca untuk membantu menentukan pakaian yang sesuai.
+
+2. Admin
+
+Admin bertugas mengelola dan menjaga konten serta data yang terdapat pada platform. Admin dapat:
+
+* Mengelola data dan konten yang dibagikan dalam Fashion Community.
+* Memoderasi konten atau postingan pengguna.
+* Mengelola data yang diperlukan agar fitur-fitur RE:STYLE dapat berjalan dengan baik.
