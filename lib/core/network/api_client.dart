@@ -4,8 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
 class ApiClient {
-  final FlutterSecureStorage _storage =
-      const FlutterSecureStorage();
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   Future<String?> getToken() async {
     return await _storage.read(key: 'auth_token');
@@ -23,11 +22,30 @@ class ApiClient {
     String url, {
     bool authenticated = false,
   }) async {
-    return _request(
+    final response = await _request(
       'GET',
       url,
       authenticated: authenticated,
     );
+    if (response is Map) return Map<String, dynamic>.from(response);
+    throw Exception('Format respons API tidak sesuai.');
+  }
+
+  Future<List<Map<String, dynamic>>> getList(
+    String url, {
+    bool authenticated = false,
+  }) async {
+    final response = await _request(
+      'GET',
+      url,
+      authenticated: authenticated,
+    );
+    if (response is List) {
+      return response
+          .map((item) => Map<String, dynamic>.from(item as Map))
+          .toList();
+    }
+    throw Exception('Format respons API bukan berupa list.');
   }
 
   Future<Map<String, dynamic>> post(
@@ -35,12 +53,14 @@ class ApiClient {
     Map<String, dynamic>? body,
     bool authenticated = false,
   }) async {
-    return _request(
+    final response = await _request(
       'POST',
       url,
       body: body,
       authenticated: authenticated,
     );
+    if (response is Map) return Map<String, dynamic>.from(response);
+    throw Exception('Format respons API tidak sesuai.');
   }
 
   Future<Map<String, dynamic>> patch(
@@ -48,15 +68,17 @@ class ApiClient {
     Map<String, dynamic>? body,
     bool authenticated = false,
   }) async {
-    return _request(
+    final response = await _request(
       'PATCH',
       url,
       body: body,
       authenticated: authenticated,
     );
+    if (response is Map) return Map<String, dynamic>.from(response);
+    throw Exception('Format respons API tidak sesuai.');
   }
 
-  Future<Map<String, dynamic>> _request(
+  Future<dynamic> _request(
     String method,
     String url, {
     Map<String, dynamic>? body,
@@ -105,9 +127,8 @@ class ApiClient {
         ? {}
         : jsonDecode(response.body);
 
-    if (response.statusCode >= 200 &&
-        response.statusCode < 300) {
-      return Map<String, dynamic>.from(decoded as Map);
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return decoded;
     }
 
     throw Exception(
