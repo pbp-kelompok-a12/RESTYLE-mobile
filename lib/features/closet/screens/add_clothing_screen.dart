@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../services/closet_service.dart';
 
 class AddClothingScreen extends StatefulWidget {
   const AddClothingScreen({super.key});
@@ -82,9 +83,12 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
 
   final _formKey = GlobalKey<FormState>();
   final ImagePicker _imagePicker = ImagePicker();
+  final ClosetService _closetService = ClosetService();
   XFile? _selectedImage;
   Uint8List? _selectedImageBytes;
   bool _isPickingImage = false;
+  bool _isSubmitting = false;
+  String? _submitError;
   String? _photoError;
   final _nameController = TextEditingController();
   final _materialController = TextEditingController();
@@ -211,7 +215,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Photo (optional)',
+          'Photo *',
           style: TextStyle(
             color: AppColors.azureMartinique,
             fontSize: 15,
@@ -336,13 +340,53 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
     );
   }
 
-  void _save() {
-    if (!_formKey.currentState!.validate()) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Form siap. Penyimpanan ke API belum tersedia.'),
-      ),
-    );
+  Future<void> _save() async {
+    if (_isSubmitting || !_formKey.currentState!.validate()) return;
+
+    final image = _selectedImage;
+    final imageBytes = _selectedImageBytes;
+    if (image == null || imageBytes == null) {
+      setState(() => _submitError = 'A photo is required to save this item.');
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+      _submitError = null;
+    });
+
+    try {
+      await _closetService.createItem(
+        name: _nameController.text.trim(),
+        category: _category!,
+        color: _color!,
+        material: _materialController.text.trim(),
+        styles: _selectedStyles.toList(),
+        seasons: _selectedSeasons.toList(),
+        weather: _selectedWeather.toList(),
+        store: _storeController.text.trim(),
+        purchaseLink: _purchaseLinkController.text.trim(),
+        datePurchased: _datePurchased,
+        price: _priceController.text.isEmpty
+            ? null
+            : int.parse(_priceController.text),
+        photoBytes: imageBytes,
+        photoFilename: image.name,
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Clothing item added to your closet.')),
+      );
+      Navigator.of(context).pop(true);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _submitError = error.toString().replaceFirst('Exception: ', '');
+      });
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   String _label(String value) {
@@ -711,13 +755,23 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                         const SizedBox(height: 22),
                         _buildPhotoSection(),
                         const SizedBox(height: 28),
+                        if (_submitError != null) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            _submitError!,
+                            style: const TextStyle(color: AppColors.redCherry),
+                          ),
+                        ],
+                        const SizedBox(height: 12),
                         Wrap(
                           alignment: WrapAlignment.end,
                           spacing: 12,
                           runSpacing: 10,
                           children: [
                             OutlinedButton(
-                              onPressed: () => Navigator.of(context).maybePop(),
+                              onPressed: _isSubmitting
+                                  ? null
+                                  : () => Navigator.of(context).maybePop(),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: AppColors.azureSanMarino,
                                 side: const BorderSide(
@@ -732,7 +786,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                               child: const Text('Cancel'),
                             ),
                             FilledButton(
-                              onPressed: _save,
+                              onPressed: _isSubmitting ? null : _save,
                               style: FilledButton.styleFrom(
                                 backgroundColor: AppColors.azureSanMarino,
                                 foregroundColor: AppColors.whiteSolid,
@@ -742,7 +796,15 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                                 ),
                                 shape: const StadiumBorder(),
                               ),
-                              child: const Text('Save'),
+                              child: _isSubmitting
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text('Save'),
                             ),
                           ],
                         ),
