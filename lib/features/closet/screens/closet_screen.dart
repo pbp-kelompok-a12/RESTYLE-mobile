@@ -4,6 +4,7 @@ import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/app_colors.dart';
 import '../models/clothing_item.dart';
 import '../services/closet_service.dart';
+import 'add_clothing_screen.dart';
 
 class ClosetScreen extends StatefulWidget {
   const ClosetScreen({super.key});
@@ -73,6 +74,13 @@ class _ClosetScreenState extends State<ClosetScreen> {
         title: const Text('Digital Closet'),
         backgroundColor: AppColors.orangeLinen,
         actions: [
+          IconButton(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const AddClothingScreen()),
+            ),
+            icon: const Icon(Icons.add_rounded),
+            tooltip: 'Add clothing',
+          ),
           IconButton(
             onPressed: () => _loadItems(showLoading: false),
             icon: const Icon(Icons.refresh_rounded),
