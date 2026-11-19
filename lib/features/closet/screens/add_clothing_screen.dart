@@ -99,6 +99,7 @@ class _ClothingFormScreenState extends State<ClothingFormScreen> {
   Uint8List? _selectedImageBytes;
   bool _isPickingImage = false;
   bool _isSubmitting = false;
+  bool _isDeleting = false;
   String? _submitError;
   String? _photoError;
   String? _existingPhotoUrl;
@@ -394,7 +395,9 @@ class _ClothingFormScreenState extends State<ClothingFormScreen> {
   }
 
   Future<void> _save() async {
-    if (_isSubmitting || !_formKey.currentState!.validate()) return;
+    if (_isSubmitting || _isDeleting || !_formKey.currentState!.validate()) {
+      return;
+    }
 
     final item = widget.item;
     final image = _selectedImage;
@@ -467,6 +470,54 @@ class _ClothingFormScreenState extends State<ClothingFormScreen> {
       });
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  Future<void> _deleteItem() async {
+    final item = widget.item;
+    if (item == null || _isSubmitting || _isDeleting) return;
+
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete clothing item?'),
+        content: Text(
+          '“${item.name}” will be removed from your Digital Closet.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.redCherry),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldDelete != true || !mounted) return;
+    setState(() {
+      _isDeleting = true;
+      _submitError = null;
+    });
+
+    try {
+      await _closetService.deleteItem(item.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Clothing item deleted.')));
+      Navigator.of(context).pop(true);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _submitError = error.toString().replaceFirst('Exception: ', '');
+      });
+    } finally {
+      if (mounted) setState(() => _isDeleting = false);
     }
   }
 
@@ -854,8 +905,38 @@ class _ClothingFormScreenState extends State<ClothingFormScreen> {
                           spacing: 12,
                           runSpacing: 10,
                           children: [
+                            if (widget.item != null)
+                              OutlinedButton.icon(
+                                onPressed: _isSubmitting || _isDeleting
+                                    ? null
+                                    : _deleteItem,
+                                icon: _isDeleting
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: AppColors.redCherry,
+                                        ),
+                                      )
+                                    : const Icon(Icons.delete_outline),
+                                label: Text(
+                                  _isDeleting ? 'Deleting…' : 'Delete',
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppColors.redCherry,
+                                  side: const BorderSide(
+                                    color: AppColors.redCherry,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 14,
+                                  ),
+                                  shape: const StadiumBorder(),
+                                ),
+                              ),
                             OutlinedButton(
-                              onPressed: _isSubmitting
+                              onPressed: _isSubmitting || _isDeleting
                                   ? null
                                   : () => Navigator.of(context).maybePop(),
                               style: OutlinedButton.styleFrom(
@@ -872,7 +953,9 @@ class _ClothingFormScreenState extends State<ClothingFormScreen> {
                               child: const Text('Cancel'),
                             ),
                             FilledButton(
-                              onPressed: _isSubmitting ? null : _save,
+                              onPressed: _isSubmitting || _isDeleting
+                                  ? null
+                                  : _save,
                               style: FilledButton.styleFrom(
                                 backgroundColor: AppColors.azureSanMarino,
                                 foregroundColor: AppColors.whiteSolid,

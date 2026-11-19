@@ -138,4 +138,8 @@ class ClosetService {
     );
     return ClothingItem.fromJson(response);
   }
+
+  Future<void> deleteItem(int id) async {
+    await _apiClient.delete('${ApiConstants.closet}$id/', authenticated: true);
+  }
 }
