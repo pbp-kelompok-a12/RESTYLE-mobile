@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../auth/screens/profile_screen.dart';
+import '../../closet/screens/closet_screen.dart';
 import '../widgets/floating_nav_bar.dart';
 import 'section_placeholder_screen.dart';
 
@@ -28,10 +29,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
       title: 'Mixmatch',
       icon: Icons.auto_awesome_rounded,
     ),
-    SectionPlaceholderScreen(
-      title: 'Closet',
-      icon: Icons.checkroom_rounded,
-    ),
+    ClosetScreen(),
     SectionPlaceholderScreen(
       title: 'Community',
       icon: Icons.groups_rounded,

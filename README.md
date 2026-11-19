@@ -146,9 +146,13 @@ Flutter mengolah JSON dan memperbarui tampilan
 
 **Checkpoint 1 mensyaratkan endpoint DRF setiap modul sudah tersedia dan berjalan.** Tabel ini diisi setelah masing-masing penanggung jawab membagikan endpoint yang sudah diuji. Jangan menandai endpoint sebagai selesai sebelum berhasil diuji.
 
-| Modul | Endpoint yang telah diuji | Method | Status |
-|---|---|---|---|
-| Digital Closet | Belum dicantumkan | — | Perlu konfirmasi |
+| Modul | Endpoint | Method | Deskripsi | Status |
+|---|---|---|---|---|
+| Digital Closet | `/api/closet/` | GET | Mengambil daftar pakaian milik user yang sedang login | Tested |
+| Digital Closet | `/api/closet/` | POST | Menambahkan pakaian baru ke Digital Closet | Tested |
+| Digital Closet | `/api/closet/<id>/` | GET | Mengambil detail pakaian berdasarkan ID | Available |
+| Digital Closet | `/api/closet/<id>/` | PATCH | Memperbarui data pakaian berdasarkan ID | Tested |
+| Digital Closet | `/api/closet/<id>/` | DELETE | Menghapus pakaian berdasarkan ID | Tested |
 | Mix & Match | Belum dicantumkan | — | Perlu konfirmasi |
 | Weekly Outfit Planner | Belum dicantumkan | — | Perlu konfirmasi |
 | Conscious Shopping & Autentikasi | Belum dicantumkan | — | Perlu konfirmasi |
