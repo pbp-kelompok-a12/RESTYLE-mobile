@@ -78,6 +78,19 @@ class ApiClient {
     throw Exception('Format respons API tidak sesuai.');
   }
 
+  Future<Map<String, dynamic>> delete(
+    String url, {
+    bool authenticated = false,
+  }) async {
+    final response = await _request(
+      'DELETE',
+      url,
+      authenticated: authenticated,
+    );
+    if (response is Map) return Map<String, dynamic>.from(response);
+    throw Exception('Format respons API tidak sesuai.');
+  }
+
   Future<dynamic> _request(
     String method,
     String url, {
@@ -119,6 +132,9 @@ class ApiClient {
           body: jsonEncode(body ?? {}),
         );
         break;
+      case 'DELETE':
+        response = await http.delete(uri, headers: headers);
+        break;
       default:
         throw Exception('HTTP method tidak didukung.');
     }
@@ -135,6 +151,7 @@ class ApiClient {
       decoded is Map
           ? decoded['detail']?.toString() ??
               decoded['message']?.toString() ??
+              decoded['error']?.toString() ??
               decoded.toString()
           : decoded.toString(),
     );

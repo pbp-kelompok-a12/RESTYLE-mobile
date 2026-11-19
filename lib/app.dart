@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'core/constants/app_colors.dart';
 import 'features/auth/screens/login_screen.dart';
 
 class RestyleApp extends StatelessWidget {
@@ -12,7 +13,7 @@ class RestyleApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF8B7355),
+          seedColor: AppColors.orangeTumbleweed,
         ),
         useMaterial3: true,
       ),

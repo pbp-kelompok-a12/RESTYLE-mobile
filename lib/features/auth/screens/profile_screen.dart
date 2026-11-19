@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/app_colors.dart';
 import '../models/user_profile.dart';
 import '../services/auth_service.dart';
 import 'login_screen.dart';
@@ -190,7 +191,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const SizedBox(height: 8),
                       Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(color: AppColors.redCherry),
                       ),
                     ],
                     const SizedBox(height: 8),
