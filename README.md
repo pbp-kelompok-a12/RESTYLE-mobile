@@ -153,7 +153,12 @@ Flutter mengolah JSON dan memperbarui tampilan
 | Digital Closet | `/api/closet/<id>/` | GET | Mengambil detail pakaian berdasarkan ID | Available |
 | Digital Closet | `/api/closet/<id>/` | PATCH | Memperbarui data pakaian berdasarkan ID | Tested |
 | Digital Closet | `/api/closet/<id>/` | DELETE | Menghapus pakaian berdasarkan ID | Tested |
-| Mix & Match | Belum dicantumkan | — | Perlu konfirmasi |
+| Mix & Match | `/api/mixmatch/` | GET | Menampilkan daftar outfit | Tested |
+| Mix & Match | `/api/mixmatch/` | POST | Membuat outfit baru | Tested |
+| Mix & Match | `/api/mixmatch/<id>/` | GET | Mengambil detail outfit | Tested |
+| Mix & Match | `/api/mixmatch/<id>/` | PUT | Memperbarui outfit | Tested |
+| Mix & Match | `/api/mixmatch/<id>/` | PATCH | Memperbarui sebagian data outfit | Tested |
+| Mix & Match | `/api/mixmatch/<id>/` | DELETE | Menghapus outfit | Tested |
 | Weekly Outfit Planner | Belum dicantumkan | — | Perlu konfirmasi |
 | Conscious Shopping & Autentikasi | Belum dicantumkan | — | Perlu konfirmasi |
 | Fashion Community | Belum dicantumkan | — | Perlu konfirmasi |
