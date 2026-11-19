@@ -78,8 +78,47 @@ class ApiClient {
     required Uint8List fileBytes,
     required String fileName,
     bool authenticated = false,
+  }) {
+    return _sendMultipart(
+      'POST',
+      url,
+      fields: fields,
+      fileField: fileField,
+      fileBytes: fileBytes,
+      fileName: fileName,
+      authenticated: authenticated,
+    );
+  }
+
+  Future<Map<String, dynamic>> patchMultipart(
+    String url, {
+    required Map<String, String> fields,
+    required String fileField,
+    required Uint8List fileBytes,
+    required String fileName,
+    bool authenticated = false,
+  }) {
+    return _sendMultipart(
+      'PATCH',
+      url,
+      fields: fields,
+      fileField: fileField,
+      fileBytes: fileBytes,
+      fileName: fileName,
+      authenticated: authenticated,
+    );
+  }
+
+  Future<Map<String, dynamic>> _sendMultipart(
+    String method,
+    String url, {
+    required Map<String, String> fields,
+    required String fileField,
+    required Uint8List fileBytes,
+    required String fileName,
+    required bool authenticated,
   }) async {
-    final request = http.MultipartRequest('POST', Uri.parse(url));
+    final request = http.MultipartRequest(method, Uri.parse(url));
     request.fields.addAll(fields);
 
     if (authenticated) {

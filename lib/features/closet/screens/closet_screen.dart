@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../models/clothing_item.dart';
 import '../services/closet_service.dart';
 import 'add_clothing_screen.dart';
+import 'edit_clothing_screen.dart';
 
 class ClosetScreen extends StatefulWidget {
   const ClosetScreen({super.key});
@@ -51,6 +52,14 @@ class _ClosetScreenState extends State<ClosetScreen> {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  Future<void> _openEditItem(ClothingItem item) async {
+    final updated = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => EditClothingScreen(item: item)),
+    );
+    if (!mounted || updated != true) return;
+    await _loadItems(showLoading: false);
   }
 
   String? _resolveImageUrl(ClothingItem item) {
@@ -187,6 +196,7 @@ class _ClosetScreenState extends State<ClosetScreen> {
                     (context, index) => _ClothingCard(
                       item: _items[index],
                       imageUrl: _resolveImageUrl(_items[index]),
+                      onTap: () => _openEditItem(_items[index]),
                     ),
                     childCount: _items.length,
                   ),
@@ -275,103 +285,117 @@ class _MessageState extends StatelessWidget {
 }
 
 class _ClothingCard extends StatelessWidget {
-  const _ClothingCard({required this.item, required this.imageUrl});
+  const _ClothingCard({
+    required this.item,
+    required this.imageUrl,
+    required this.onTap,
+  });
 
   final ClothingItem item;
   final String? imageUrl;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: AppColors.whiteSolid,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.orangePearlBrush),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.azureMartinique6,
-            blurRadius: 12,
-            offset: Offset(0, 4),
+        child: Container(
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: AppColors.whiteSolid,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: AppColors.orangePearlBrush),
+            boxShadow: const [
+              BoxShadow(
+                color: AppColors.azureMartinique6,
+                blurRadius: 12,
+                offset: Offset(0, 4),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: SizedBox(
-              width: double.infinity,
-              child: imageUrl == null
-                  ? const _PhotoFallback()
-                  : Image.network(
-                      imageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          const _PhotoFallback(),
-                      loadingBuilder: (context, child, progress) {
-                        if (progress == null) return child;
-                        return const _PhotoFallback(isLoading: true);
-                      },
-                    ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  item.name,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppColors.azureMartinique,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  item.category,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppColors.azureDolphin,
-                    fontSize: 12,
-                  ),
-                ),
-                const SizedBox(height: 7),
-                Row(
-                  children: [
-                    Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: _parseColor(item.colorHex),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.orangePearlBrush),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        item.color,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppColors.azureDolphin,
-                          fontSize: 12,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: SizedBox(
+                  width: double.infinity,
+                  child: imageUrl == null
+                      ? const _PhotoFallback()
+                      : Image.network(
+                          imageUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const _PhotoFallback(),
+                          loadingBuilder: (context, child, progress) {
+                            if (progress == null) return child;
+                            return const _PhotoFallback(isLoading: true);
+                          },
                         ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      item.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.azureMartinique,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
                       ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      item.category,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.azureDolphin,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 7),
+                    Row(
+                      children: [
+                        Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: _parseColor(item.colorHex),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: AppColors.orangePearlBrush,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            item.color,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: AppColors.azureDolphin,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

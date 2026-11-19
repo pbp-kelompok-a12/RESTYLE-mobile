@@ -3,17 +3,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/app_colors.dart';
+import '../models/clothing_item.dart';
 import '../services/closet_service.dart';
 
-class AddClothingScreen extends StatefulWidget {
+class AddClothingScreen extends StatelessWidget {
   const AddClothingScreen({super.key});
 
   @override
-  State<AddClothingScreen> createState() => _AddClothingScreenState();
+  Widget build(BuildContext context) => const ClothingFormScreen();
 }
 
-class _AddClothingScreenState extends State<AddClothingScreen> {
+class ClothingFormScreen extends StatefulWidget {
+  const ClothingFormScreen({this.item, super.key});
+
+  final ClothingItem? item;
+
+  @override
+  State<ClothingFormScreen> createState() => _ClothingFormScreenState();
+}
+
+class _ClothingFormScreenState extends State<ClothingFormScreen> {
   static const _categories = <String>[
     'top',
     'bottom',
@@ -90,6 +101,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
   bool _isSubmitting = false;
   String? _submitError;
   String? _photoError;
+  String? _existingPhotoUrl;
   final _nameController = TextEditingController();
   final _materialController = TextEditingController();
   final _storeController = TextEditingController();
@@ -107,9 +119,37 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
   @override
   void initState() {
     super.initState();
+    final item = widget.item;
+    if (item != null) {
+      _nameController.text = item.name;
+      _materialController.text = item.material;
+      _storeController.text = item.store;
+      _purchaseLinkController.text = item.purchaseLink;
+      _priceController.text = item.price?.toString() ?? '';
+      _category = item.category;
+      _color = item.color;
+      _status = item.status;
+      _datePurchased = item.datePurchased;
+      _selectedStyles.addAll(item.styles);
+      _selectedSeasons.addAll(item.seasons);
+      _selectedWeather.addAll(item.weather);
+      _existingPhotoUrl = _resolveExistingPhotoUrl(item);
+    }
     if (defaultTargetPlatform == TargetPlatform.android) {
       _recoverLostImage();
     }
+  }
+
+  String? _resolveExistingPhotoUrl(ClothingItem item) {
+    final value = item.photoUrl?.trim().isNotEmpty == true
+        ? item.photoUrl!.trim()
+        : item.photo?.trim();
+    if (value == null || value.isEmpty) return null;
+    final uri = Uri.tryParse(value);
+    if (uri == null) return null;
+    return uri.hasScheme
+        ? value
+        : Uri.parse(ApiConstants.baseUrl).resolve(value).toString();
   }
 
   Future<void> _recoverLostImage() async {
@@ -211,19 +251,27 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
 
   Widget _buildPhotoSection() {
     final bytes = _selectedImageBytes;
+    final currentPhotoUrl = _existingPhotoUrl;
+    final hasPhoto = bytes != null || currentPhotoUrl != null;
+    final ImageProvider? previewImage = bytes != null
+        ? MemoryImage(bytes)
+        : currentPhotoUrl == null
+        ? null
+        : NetworkImage(currentPhotoUrl);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Photo *',
-          style: TextStyle(
+        Text(
+          widget.item == null ? 'Photo *' : 'Photo',
+          style: const TextStyle(
             color: AppColors.azureMartinique,
             fontSize: 15,
             fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: 8),
-        if (bytes == null)
+        if (!hasPhoto)
           InkWell(
             onTap: _isPickingImage ? null : _pickImage,
             borderRadius: BorderRadius.circular(14),
@@ -274,8 +322,8 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
               width: double.infinity,
               height: 230,
               color: AppColors.orangePearlBrush.withValues(alpha: 0.45),
-              child: Image.memory(
-                bytes,
+              child: Image(
+                image: previewImage!,
                 fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) => const Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -298,7 +346,9 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            _selectedImage?.name ?? 'Selected photo',
+            bytes == null
+                ? 'Current photo'
+                : _selectedImage?.name ?? 'Selected photo',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(color: AppColors.azureDolphin, fontSize: 12),
@@ -318,14 +368,17 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                   shape: const StadiumBorder(),
                 ),
               ),
-              TextButton.icon(
-                onPressed: _removeImage,
-                icon: const Icon(Icons.delete_outline_rounded),
-                label: const Text('Remove'),
-                style: TextButton.styleFrom(
-                  foregroundColor: AppColors.redCherry,
+              if (bytes != null)
+                TextButton.icon(
+                  onPressed: _removeImage,
+                  icon: const Icon(Icons.undo_rounded),
+                  label: Text(
+                    currentPhotoUrl == null ? 'Remove' : 'Keep current',
+                  ),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.redCherry,
+                  ),
                 ),
-              ),
             ],
           ),
         ],
@@ -343,9 +396,10 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
   Future<void> _save() async {
     if (_isSubmitting || !_formKey.currentState!.validate()) return;
 
+    final item = widget.item;
     final image = _selectedImage;
     final imageBytes = _selectedImageBytes;
-    if (image == null || imageBytes == null) {
+    if (item == null && (image == null || imageBytes == null)) {
       setState(() => _submitError = 'A photo is required to save this item.');
       return;
     }
@@ -356,27 +410,54 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
     });
 
     try {
-      await _closetService.createItem(
-        name: _nameController.text.trim(),
-        category: _category!,
-        color: _color!,
-        material: _materialController.text.trim(),
-        styles: _selectedStyles.toList(),
-        seasons: _selectedSeasons.toList(),
-        weather: _selectedWeather.toList(),
-        store: _storeController.text.trim(),
-        purchaseLink: _purchaseLinkController.text.trim(),
-        datePurchased: _datePurchased,
-        price: _priceController.text.isEmpty
-            ? null
-            : int.parse(_priceController.text),
-        photoBytes: imageBytes,
-        photoFilename: image.name,
-      );
+      if (item == null) {
+        await _closetService.createItem(
+          name: _nameController.text.trim(),
+          category: _category!,
+          color: _color!,
+          material: _materialController.text.trim(),
+          styles: _selectedStyles.toList(),
+          seasons: _selectedSeasons.toList(),
+          weather: _selectedWeather.toList(),
+          store: _storeController.text.trim(),
+          purchaseLink: _purchaseLinkController.text.trim(),
+          datePurchased: _datePurchased,
+          price: _priceController.text.isEmpty
+              ? null
+              : int.parse(_priceController.text),
+          photoBytes: imageBytes!,
+          photoFilename: image!.name,
+        );
+      } else {
+        await _closetService.updateItem(
+          original: item,
+          name: _nameController.text.trim(),
+          category: _category!,
+          color: _color!,
+          material: _materialController.text.trim(),
+          styles: _selectedStyles.toList(),
+          seasons: _selectedSeasons.toList(),
+          weather: _selectedWeather.toList(),
+          store: _storeController.text.trim(),
+          purchaseLink: _purchaseLinkController.text.trim(),
+          datePurchased: _datePurchased,
+          price: _priceController.text.isEmpty
+              ? null
+              : int.parse(_priceController.text),
+          photoBytes: imageBytes,
+          photoFilename: image?.name,
+        );
+      }
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Clothing item added to your closet.')),
+        SnackBar(
+          content: Text(
+            item == null
+                ? 'Clothing item added to your closet.'
+                : 'Clothing item updated.',
+          ),
+        ),
       );
       Navigator.of(context).pop(true);
     } catch (error) {
@@ -522,7 +603,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
     return Scaffold(
       backgroundColor: AppColors.orangeLinen,
       appBar: AppBar(
-        title: const Text('Add Clothing'),
+        title: Text(widget.item == null ? 'Add Clothing' : 'Edit Clothing'),
         backgroundColor: AppColors.orangeLinen,
       ),
       body: SafeArea(
@@ -545,8 +626,10 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Add a piece to your wardrobe',
+                        Text(
+                          widget.item == null
+                              ? 'Add a piece to your wardrobe'
+                              : 'Edit your clothing item',
                           style: TextStyle(
                             color: AppColors.azureMartinique,
                             fontSize: 23,
@@ -554,8 +637,10 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                           ),
                         ),
                         const SizedBox(height: 6),
-                        const Text(
-                          'Tell us a little about this clothing item.',
+                        Text(
+                          widget.item == null
+                              ? 'Tell us a little about this clothing item.'
+                              : 'Update the details for this item.',
                           style: TextStyle(color: AppColors.azureDolphin),
                         ),
                         const SizedBox(height: 24),
@@ -618,15 +703,16 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                                 },
                               ),
                             ),
-                            SizedBox(
-                              width: fieldWidth,
-                              child: _dropdown(
-                                'Status',
-                                _status,
-                                _statuses.keys.toList(),
-                                (value) => setState(() => _status = value!),
+                            if (widget.item == null)
+                              SizedBox(
+                                width: fieldWidth,
+                                child: _dropdown(
+                                  'Status',
+                                  _status,
+                                  _statuses.keys.toList(),
+                                  (value) => setState(() => _status = value!),
+                                ),
                               ),
-                            ),
                             SizedBox(
                               width: fieldWidth,
                               child: _textField(
