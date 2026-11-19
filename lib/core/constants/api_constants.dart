@@ -5,4 +5,5 @@ class ApiConstants {
   static const String login = '$baseUrl/api/auth/login/';
   static const String logout = '$baseUrl/api/auth/logout/';
   static const String profile = '$baseUrl/api/auth/profile/';
+  static const String closet = '$baseUrl/api/closet/';
 }
