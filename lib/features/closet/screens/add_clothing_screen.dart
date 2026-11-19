@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/constants/app_colors.dart';
 
@@ -79,6 +81,11 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
   };
 
   final _formKey = GlobalKey<FormState>();
+  final ImagePicker _imagePicker = ImagePicker();
+  XFile? _selectedImage;
+  Uint8List? _selectedImageBytes;
+  bool _isPickingImage = false;
+  String? _photoError;
   final _nameController = TextEditingController();
   final _materialController = TextEditingController();
   final _storeController = TextEditingController();
@@ -92,6 +99,48 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
   final Set<String> _selectedStyles = {};
   final Set<String> _selectedSeasons = {};
   final Set<String> _selectedWeather = {};
+
+  @override
+  void initState() {
+    super.initState();
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      _recoverLostImage();
+    }
+  }
+
+  Future<void> _recoverLostImage() async {
+    try {
+      final response = await _imagePicker.retrieveLostData();
+      if (response.isEmpty) return;
+      final files = response.files;
+      if (files == null || files.isEmpty) {
+        if (!mounted) return;
+        setState(() {
+          _photoError = 'Foto dari pemilih sebelumnya tidak dapat dipulihkan.';
+        });
+        return;
+      }
+      await _loadSelectedImage(files.first);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _photoError = 'Foto dari pemilih sebelumnya tidak dapat dipulihkan.';
+      });
+    }
+  }
+
+  Future<void> _loadSelectedImage(XFile image) async {
+    final bytes = await image.readAsBytes();
+    if (bytes.isEmpty) {
+      throw const FormatException('The selected image is empty.');
+    }
+    if (!mounted) return;
+    setState(() {
+      _selectedImage = image;
+      _selectedImageBytes = bytes;
+      _photoError = null;
+    });
+  }
 
   @override
   void dispose() {
@@ -113,6 +162,178 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
       helpText: 'Select purchase date',
     );
     if (picked != null) setState(() => _datePurchased = picked);
+  }
+
+  Future<void> _pickImage() async {
+    if (_isPickingImage) return;
+    setState(() {
+      _isPickingImage = true;
+      _photoError = null;
+    });
+
+    try {
+      final pickedImage = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+      );
+      if (pickedImage == null) return;
+
+      final bytes = await pickedImage.readAsBytes();
+      if (bytes.isEmpty) {
+        throw const FormatException('The selected image is empty.');
+      }
+      if (!mounted) return;
+      setState(() {
+        _selectedImage = pickedImage;
+        _selectedImageBytes = bytes;
+        _photoError = null;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _photoError = 'Gambar gagal dipilih atau dibaca. Silakan coba lagi.';
+      });
+    } finally {
+      if (mounted) setState(() => _isPickingImage = false);
+    }
+  }
+
+  void _removeImage() {
+    setState(() {
+      _selectedImage = null;
+      _selectedImageBytes = null;
+      _photoError = null;
+    });
+  }
+
+  Widget _buildPhotoSection() {
+    final bytes = _selectedImageBytes;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Photo (optional)',
+          style: TextStyle(
+            color: AppColors.azureMartinique,
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        if (bytes == null)
+          InkWell(
+            onTap: _isPickingImage ? null : _pickImage,
+            borderRadius: BorderRadius.circular(14),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
+              decoration: BoxDecoration(
+                color: AppColors.whiteSolid,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.orangePearlBrush),
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    _isPickingImage
+                        ? Icons.hourglass_top_rounded
+                        : Icons.add_photo_alternate_outlined,
+                    size: 34,
+                    color: AppColors.azure57,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _isPickingImage
+                        ? 'Opening image picker...'
+                        : 'Choose a clothing photo',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: AppColors.azureDolphin),
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: _isPickingImage ? null : _pickImage,
+                    icon: const Icon(Icons.photo_library_outlined),
+                    label: const Text('Choose photo'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.azureSanMarino,
+                      side: const BorderSide(color: AppColors.azureSanMarino),
+                      shape: const StadiumBorder(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else ...[
+          ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: Container(
+              width: double.infinity,
+              height: 230,
+              color: AppColors.orangePearlBrush.withValues(alpha: 0.45),
+              child: Image.memory(
+                bytes,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => const Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.broken_image_outlined,
+                      size: 42,
+                      color: AppColors.azure57,
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Preview unavailable. Choose another image.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: AppColors.azureDolphin),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _selectedImage?.name ?? 'Selected photo',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: AppColors.azureDolphin, fontSize: 12),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: [
+              OutlinedButton.icon(
+                onPressed: _isPickingImage ? null : _pickImage,
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Change photo'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.azureSanMarino,
+                  side: const BorderSide(color: AppColors.azureSanMarino),
+                  shape: const StadiumBorder(),
+                ),
+              ),
+              TextButton.icon(
+                onPressed: _removeImage,
+                icon: const Icon(Icons.delete_outline_rounded),
+                label: const Text('Remove'),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.redCherry,
+                ),
+              ),
+            ],
+          ),
+        ],
+        if (_photoError != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            _photoError!,
+            style: const TextStyle(color: AppColors.redCherry, fontSize: 13),
+          ),
+        ],
+      ],
+    );
   }
 
   void _save() {
@@ -488,44 +709,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
                           }),
                         ),
                         const SizedBox(height: 22),
-                        const Text(
-                          'Photo (optional)',
-                          style: TextStyle(
-                            color: AppColors.azureMartinique,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 24,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.whiteSolid,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: AppColors.orangePearlBrush,
-                            ),
-                          ),
-                          child: const Column(
-                            children: [
-                              Icon(
-                                Icons.add_photo_alternate_outlined,
-                                size: 34,
-                                color: AppColors.azure57,
-                              ),
-                              SizedBox(height: 8),
-                              Text(
-                                'Photo selection will be available later',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(color: AppColors.azureDolphin),
-                              ),
-                            ],
-                          ),
-                        ),
+                        _buildPhotoSection(),
                         const SizedBox(height: 28),
                         Wrap(
                           alignment: WrapAlignment.end,
@@ -575,4 +759,3 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
     );
   }
 }
-
