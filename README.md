@@ -146,13 +146,35 @@ Flutter mengolah JSON dan memperbarui tampilan
 
 **Checkpoint 1 mensyaratkan endpoint DRF setiap modul sudah tersedia dan berjalan.** Tabel ini diisi setelah masing-masing penanggung jawab membagikan endpoint yang sudah diuji. Jangan menandai endpoint sebagai selesai sebelum berhasil diuji.
 
-| Modul | Endpoint yang telah diuji | Method | Status |
-|---|---|---|---|
-| Digital Closet | Belum dicantumkan | — | Perlu konfirmasi |
-| Mix & Match | Belum dicantumkan | — | Perlu konfirmasi |
+| Modul | Endpoint | Method | Deskripsi | Status |
+|---|---|---|---|---|
+| Digital Closet | `/api/closet/` | GET | Mengambil daftar pakaian milik user yang sedang login | Tested |
+| Digital Closet | `/api/closet/` | POST | Menambahkan pakaian baru ke Digital Closet | Tested |
+| Digital Closet | `/api/closet/<id>/` | GET | Mengambil detail pakaian berdasarkan ID | Available |
+| Digital Closet | `/api/closet/<id>/` | PATCH | Memperbarui data pakaian berdasarkan ID | Tested |
+| Digital Closet | `/api/closet/<id>/` | DELETE | Menghapus pakaian berdasarkan ID | Tested |
+| Mix & Match | `/api/mixmatch/` | GET | Menampilkan daftar outfit | Tested |
+| Mix & Match | `/api/mixmatch/` | POST | Membuat outfit baru | Tested |
+| Mix & Match | `/api/mixmatch/<id>/` | GET | Mengambil detail outfit | Tested |
+| Mix & Match | `/api/mixmatch/<id>/` | PUT | Memperbarui outfit | Tested |
+| Mix & Match | `/api/mixmatch/<id>/` | PATCH | Memperbarui sebagian data outfit | Tested |
+| Mix & Match | `/api/mixmatch/<id>/` | DELETE | Menghapus outfit | Tested |
 | Weekly Outfit Planner | Belum dicantumkan | — | Perlu konfirmasi |
 | Conscious Shopping & Autentikasi | Belum dicantumkan | — | Perlu konfirmasi |
 | Fashion Community | Belum dicantumkan | — | Perlu konfirmasi |
+| Weekly Outfit Planner | `/api/planner/week/?week=<YYYY-MM-DD>` | GET | Mengambil jadwal outfit untuk minggu yang mencakup tanggal tersebut | Available |
+| Weekly Outfit Planner | `/api/planner/outfits/?date=<YYYY-MM-DD>` | GET | Mengambil daftar outfit yang dapat dipilih untuk tanggal tertentu beserta status laundry | Available |
+| Weekly Outfit Planner | `/api/planner/plans/` | GET | Mengambil jadwal outfit, dapat difilter dengan parameter `start` dan `end` | Available |
+| Weekly Outfit Planner | `/api/planner/plans/` | POST | Membuat atau mengganti jadwal outfit untuk tanggal tertentu | Available |
+| Weekly Outfit Planner | `/api/planner/plans/<YYYY-MM-DD>/` | PUT | Membuat atau mengganti jadwal outfit pada tanggal tertentu | Available |
+| Weekly Outfit Planner | `/api/planner/plans/<YYYY-MM-DD>/` | PATCH | Memperbarui jadwal outfit pada tanggal tertentu | Available |
+| Weekly Outfit Planner | `/api/planner/plans/<YYYY-MM-DD>/` | DELETE | Menghapus jadwal outfit pada tanggal tertentu | Available |
+| Weekly Outfit Planner | `/api/planner/settings/` | GET | Mengambil pengaturan hari dan durasi laundry | Available |
+| Weekly Outfit Planner | `/api/planner/settings/` | PATCH | Memperbarui pengaturan hari dan durasi laundry | Available |
+| Weekly Outfit Planner | `/api/planner/weather/current/?latitude=<lat>&longitude=<lon>` | GET | Mengambil cuaca saat ini berdasarkan koordinat | Available |
+| Weekly Outfit Planner | `/api/planner/weather/forecast/?date=<YYYY-MM-DD>&latitude=<lat>&longitude=<lon>` | GET | Mengambil prakiraan cuaca pada tanggal dan koordinat tertentu | Available |
+| Weekly Outfit Planner | `/api/planner/locations/search/?name=<nama-lokasi>` | GET | Mencari lokasi berdasarkan nama | Available |
+| Fashion Community | `/community/api/v1/posts/` | GET | — | Berhasil diuji (HTTP 200 OK) |
 
 **Format dokumentasi per endpoint yang disarankan:** method, path, tujuan, kebutuhan autentikasi, contoh respons JSON, dan hasil pengujian.
 

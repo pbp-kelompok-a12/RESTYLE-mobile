@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/app_colors.dart';
+import '../../navigation/screens/authenticated_shell.dart';
 import '../services/auth_service.dart';
-import 'profile_screen.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -40,7 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
-          builder: (_) => const ProfileScreen(),
+          builder: (_) => const AuthenticatedShell(initialIndex: 4),
         ),
         (route) => false,
       );
@@ -113,7 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 12),
                 Text(
                   _errorMessage!,
-                  style: const TextStyle(color: Colors.red),
+                  style: const TextStyle(color: AppColors.redCherry),
                 ),
               ],
               const SizedBox(height: 24),
