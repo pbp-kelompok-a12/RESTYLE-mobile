@@ -4,6 +4,7 @@ import '../../auth/screens/profile_screen.dart';
 import '../../closet/screens/closet_screen.dart';
 import '../widgets/floating_nav_bar.dart';
 import '../../mixmatch/screens/mixmatch_screen.dart';
+import '../../planner/screens/planner_screen.dart';
 import 'section_placeholder_screen.dart';
 
 class AuthenticatedShell extends StatefulWidget {
@@ -22,10 +23,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
   late int _currentIndex;
 
   static const _pages = <Widget>[
-    SectionPlaceholderScreen(
-      title: 'Planner',
-      icon: Icons.calendar_month_rounded,
-    ),
+    PlannerScreen(),
     MixMatchScreen(),
     ClosetScreen(),
     SectionPlaceholderScreen(
