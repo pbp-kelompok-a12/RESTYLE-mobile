@@ -174,6 +174,7 @@ Flutter mengolah JSON dan memperbarui tampilan
 | Weekly Outfit Planner | `/api/planner/weather/current/?latitude=<lat>&longitude=<lon>` | GET | Mengambil cuaca saat ini berdasarkan koordinat | Available |
 | Weekly Outfit Planner | `/api/planner/weather/forecast/?date=<YYYY-MM-DD>&latitude=<lat>&longitude=<lon>` | GET | Mengambil prakiraan cuaca pada tanggal dan koordinat tertentu | Available |
 | Weekly Outfit Planner | `/api/planner/locations/search/?name=<nama-lokasi>` | GET | Mencari lokasi berdasarkan nama | Available |
+| Fashion Community | `/community/api/v1/posts/` | GET | — | Berhasil diuji (HTTP 200 OK) |
 
 **Format dokumentasi per endpoint yang disarankan:** method, path, tujuan, kebutuhan autentikasi, contoh respons JSON, dan hasil pengujian.
 

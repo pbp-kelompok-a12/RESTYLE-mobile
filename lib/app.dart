@@ -1,11 +1,11 @@
-
 import 'package:flutter/material.dart';
 
 import 'core/constants/app_colors.dart';
 import 'core/network/api_client.dart';
-import 'features/auth/services/auth_service.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/auth/screens/profile_screen.dart';
+import 'features/auth/services/auth_service.dart';
+import 'features/community/screens/feed_screen.dart';
 
 class RestyleApp extends StatelessWidget {
   const RestyleApp({super.key});
@@ -22,6 +22,7 @@ class RestyleApp extends StatelessWidget {
         useMaterial3: true,
       ),
       home: const AuthGate(),
+      routes: {FeedScreen.routeName: (context) => const FeedScreen()},
     );
   }
 }
