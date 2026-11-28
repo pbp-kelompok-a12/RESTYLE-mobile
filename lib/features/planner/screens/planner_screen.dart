@@ -108,6 +108,38 @@ class _PlannerScreenState extends State<PlannerScreen> {
     _loadWeek();
   }
 
+  String _selectedDateLabel() {
+    final weekday = _weekdays[_selectedDate.weekday - 1];
+    return '$weekday, ${_selectedDate.day} ${_months[_selectedDate.month - 1]}';
+  }
+
+  Future<void> _openOutfitPicker() async {
+    final rawPlan = _weekSlots[_dateKey(_selectedDate)]?['plan'];
+    final plan = rawPlan is Map ? Map<String, dynamic>.from(rawPlan) : null;
+    final rawOutfit = plan?['outfit'];
+    final outfit = rawOutfit is Map
+        ? Map<String, dynamic>.from(rawOutfit)
+        : null;
+    final currentOutfitId = (outfit?['id'] as num?)?.toInt();
+
+    final changed = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.orangeLinen,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => _OutfitPickerSheet(
+        service: _plannerService,
+        date: _selectedDate,
+        dateLabel: _selectedDateLabel(),
+        currentOutfitId: currentOutfitId,
+        itemsById: _itemsById,
+      ),
+    );
+    if (changed == true && mounted) _loadWeek();
+  }
+
   @override
   Widget build(BuildContext context) {
     final today = DateTime.now();
@@ -213,6 +245,7 @@ class _PlannerScreenState extends State<PlannerScreen> {
               _SelectedDaySlot(
                 slot: _weekSlots[_dateKey(_selectedDate)],
                 itemsById: _itemsById,
+                onTap: _openOutfitPicker,
               ),
           ],
         ),
@@ -384,7 +417,11 @@ class _DayTile extends StatelessWidget {
 }
 
 class _SelectedDaySlot extends StatelessWidget {
-  const _SelectedDaySlot({this.slot, this.itemsById = const {}})
+  const _SelectedDaySlot({
+    this.slot,
+    this.itemsById = const {},
+    this.onTap,
+  })
       : message = null,
         onRetry = null,
         loading = false;
@@ -392,6 +429,7 @@ class _SelectedDaySlot extends StatelessWidget {
   const _SelectedDaySlot.loading()
       : slot = null,
         itemsById = const {},
+        onTap = null,
         message = null,
         onRetry = null,
         loading = true;
@@ -399,10 +437,12 @@ class _SelectedDaySlot extends StatelessWidget {
   const _SelectedDaySlot.error({required this.message, required this.onRetry})
       : slot = null,
         itemsById = const {},
+        onTap = null,
         loading = false;
 
   final Map<String, dynamic>? slot;
   final Map<int, ClothingItem> itemsById;
+  final VoidCallback? onTap;
   final String? message;
   final VoidCallback? onRetry;
   final bool loading;
@@ -419,34 +459,45 @@ class _SelectedDaySlot extends StatelessWidget {
     final tags = outfit?['tags'];
     final status = slot?['status']?.toString();
 
-    return Container(
-      constraints: const BoxConstraints(minHeight: 174),
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.whiteSolid,
-        border: Border.all(color: AppColors.azure57, width: 1.5),
+    return Material(
+      color: AppColors.whiteSolid,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(20),
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 174),
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            border: Border.all(color: AppColors.azure57, width: 1.5),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: loading
+              ? const Center(
+                  child: CircularProgressIndicator(
+                    color: AppColors.azureSanMarino,
+                  ),
+                )
+              : message != null
+                  ? _LoadError(message: message!, onRetry: onRetry!)
+                  : outfit == null
+                      ? const _EmptyPlan()
+                      : _PlannedOutfit(
+                          name: outfitName?.isNotEmpty == true
+                              ? outfitName!
+                              : 'Outfit terencana',
+                          status: status,
+                          tags: tags is List ? tags : const [],
+                          outfitItems: outfit?['items'] is Map
+                              ? Map<String, dynamic>.from(
+                                  outfit!['items'] as Map,
+                                )
+                              : const {},
+                          itemsById: itemsById,
+                        ),
       ),
-      child: loading
-          ? const Center(
-              child: CircularProgressIndicator(color: AppColors.azureSanMarino),
-            )
-          : message != null
-              ? _LoadError(message: message!, onRetry: onRetry!)
-              : outfit == null
-                  ? const _EmptyPlan()
-                  : _PlannedOutfit(
-                      name: outfitName?.isNotEmpty == true
-                          ? outfitName!
-                          : 'Outfit terencana',
-                      status: status,
-                      tags: tags is List ? tags : const [],
-                      outfitItems: outfit?['items'] is Map
-                          ? Map<String, dynamic>.from(outfit!['items'] as Map)
-                          : const {},
-                      itemsById: itemsById,
-                    ),
+      )
     );
   }
 }
@@ -565,6 +616,7 @@ class _OutfitFlat extends StatelessWidget {
     required this.outerwear,
     required this.dress,
     required this.accessories,
+    this.height = 220,
   });
 
   final ClothingItem? top;
@@ -573,10 +625,11 @@ class _OutfitFlat extends StatelessWidget {
   final ClothingItem? outerwear;
   final ClothingItem? dress;
   final List<ClothingItem> accessories;
+  final double height;
 
   @override
   Widget build(BuildContext context) => Container(
-        height: 220,
+        height: height,
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: AppColors.orangeLinen,
@@ -755,5 +808,419 @@ class _LoadError extends StatelessWidget {
             ),
           ),
         ],
+      );
+}
+
+class _OutfitPickerSheet extends StatefulWidget {
+  const _OutfitPickerSheet({
+    required this.service,
+    required this.date,
+    required this.dateLabel,
+    required this.currentOutfitId,
+    required this.itemsById,
+  });
+
+  final PlannerService service;
+  final DateTime date;
+  final String dateLabel;
+  final int? currentOutfitId;
+  final Map<int, ClothingItem> itemsById;
+
+  @override
+  State<_OutfitPickerSheet> createState() => _OutfitPickerSheetState();
+}
+
+class _OutfitPickerSheetState extends State<_OutfitPickerSheet> {
+  List<Map<String, dynamic>> _outfits = [];
+  bool _isLoading = true;
+  bool _isSaving = false;
+  String? _error;
+  int? _selectedId;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedId = widget.currentOutfitId;
+    _loadOutfits();
+  }
+
+  Future<void> _loadOutfits() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final response = await widget.service.getOutfits(widget.date);
+      final rawOutfits = response['outfits'];
+      final outfits = rawOutfits is List
+          ? rawOutfits
+              .whereType<Map>()
+              .map((outfit) => Map<String, dynamic>.from(outfit))
+              .toList()
+          : <Map<String, dynamic>>[];
+      if (!mounted) return;
+      setState(() {
+        _outfits = outfits;
+        _selectedId = (response['selected_id'] as num?)?.toInt() ??
+            widget.currentOutfitId;
+        _isLoading = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _error = error.toString().replaceFirst('Exception: ', '');
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _selectOutfit(Map<String, dynamic> outfit) async {
+    if (_isSaving) return;
+    final id = (outfit['id'] as num?)?.toInt();
+    if (id == null || outfit['status'] == 'washing') return;
+    setState(() {
+      _isSaving = true;
+      _error = null;
+    });
+    try {
+      await widget.service.savePlan(widget.date, id);
+      if (mounted) Navigator.of(context).pop(true);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _error = error.toString().replaceFirst('Exception: ', '');
+        _isSaving = false;
+      });
+    }
+  }
+
+  Future<void> _removePlan() async {
+    if (_isSaving) return;
+    setState(() {
+      _isSaving = true;
+      _error = null;
+    });
+    try {
+      await widget.service.deletePlan(widget.date);
+      if (mounted) Navigator.of(context).pop(true);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _error = error.toString().replaceFirst('Exception: ', '');
+        _isSaving = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    return SafeArea(
+      top: false,
+      child: SizedBox(
+        height: MediaQuery.sizeOf(context).height * .86,
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(18, 14, 18, 14 + bottomInset),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 38,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.orangePearlBrush,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                'Pilih outfit',
+                style: const TextStyle(
+                  color: AppColors.azureMartinique,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Untuk ${widget.dateLabel}',
+                style: const TextStyle(
+                  color: AppColors.azureDolphin,
+                  fontSize: 14,
+                ),
+              ),
+              if (_isSaving) ...[
+                const SizedBox(height: 10),
+                const LinearProgressIndicator(
+                  color: AppColors.azureSanMarino,
+                  backgroundColor: AppColors.orangePearlBrush,
+                ),
+              ],
+              if (_error != null) ...[
+                const SizedBox(height: 12),
+                _PickerError(message: _error!, onRetry: _loadOutfits),
+              ],
+              const SizedBox(height: 12),
+              Expanded(
+                child: _isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.azureSanMarino,
+                        ),
+                      )
+                    : _error != null && _outfits.isEmpty
+                        ? const Center(
+                            child: Text(
+                              'Daftar outfit belum bisa dimuat. Coba muat ulang.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: AppColors.azureDolphin,
+                              ),
+                            ),
+                          )
+                    : _outfits.isEmpty
+                        ? const _NoOutfits()
+                        : ListView.separated(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            itemCount: _outfits.length,
+                            separatorBuilder: (_, _) =>
+                                const SizedBox(height: 12),
+                            itemBuilder: (context, index) {
+                              final outfit = _outfits[index];
+                              final id = (outfit['id'] as num?)?.toInt();
+                              return _OutfitOptionCard(
+                                outfit: outfit,
+                                itemsById: widget.itemsById,
+                                selected: id != null && id == _selectedId,
+                                enabled: !_isSaving &&
+                                    outfit['status'] != 'washing',
+                                onTap: () => _selectOutfit(outfit),
+                              );
+                            },
+                          ),
+              ),
+              if (widget.currentOutfitId != null) ...[
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _isSaving ? null : _removePlan,
+                    icon: _isSaving
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.delete_outline_rounded),
+                    label: const Text('Hapus jadwal outfit'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.azureSanMarino,
+                      side: const BorderSide(color: AppColors.azure57),
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _OutfitOptionCard extends StatelessWidget {
+  const _OutfitOptionCard({
+    required this.outfit,
+    required this.itemsById,
+    required this.selected,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  final Map<String, dynamic> outfit;
+  final Map<int, ClothingItem> itemsById;
+  final bool selected;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  ClothingItem? _piece(Map<String, dynamic> pieces, String slot) {
+    final id = pieces[slot];
+    if (id is! num) return null;
+    return itemsById[id.toInt()];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final rawPieces = outfit['items'];
+    final pieces = rawPieces is Map
+        ? Map<String, dynamic>.from(rawPieces)
+        : <String, dynamic>{};
+    final rawAccessories = pieces['accessories'];
+    final accessories = rawAccessories is List
+        ? rawAccessories
+            .whereType<num>()
+            .map((id) => itemsById[id.toInt()])
+            .whereType<ClothingItem>()
+            .toList()
+        : <ClothingItem>[];
+    final tags = outfit['tags'];
+    final status = outfit['status']?.toString();
+    final isWashing = status == 'washing';
+
+    return Material(
+      color: AppColors.whiteSolid,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: selected ? AppColors.azureSanMarino : AppColors.orangePearlBrush,
+              width: selected ? 2 : 1,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      outfit['name']?.toString() ?? 'Outfit',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.azureMartinique,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  if (selected) ...[
+                    const Icon(Icons.check_circle_rounded,
+                        color: AppColors.azureSanMarino, size: 20),
+                    const SizedBox(width: 8),
+                  ],
+                  _StatusPill(isWashing: isWashing),
+                ],
+              ),
+              const SizedBox(height: 8),
+              IgnorePointer(
+                child: Opacity(
+                  opacity: isWashing ? .5 : 1,
+                  child: _OutfitFlat(
+                    height: 132,
+                    top: _piece(pieces, 'top'),
+                    bottom: _piece(pieces, 'bottom'),
+                    shoes: _piece(pieces, 'shoes'),
+                    outerwear: _piece(pieces, 'outerwear'),
+                    dress: _piece(pieces, 'dresses'),
+                    accessories: accessories,
+                  ),
+                ),
+              ),
+              if (tags is List && tags.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  tags.map((tag) => tag.toString()).join(' · '),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.azureDolphin,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+              if (isWashing) ...[
+                const SizedBox(height: 6),
+                const Text(
+                  'Outfit ini belum bisa dijadwalkan karena item sedang dicuci.',
+                  style: TextStyle(
+                    color: AppColors.redCherry,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NoOutfits extends StatelessWidget {
+  const _NoOutfits();
+
+  @override
+  Widget build(BuildContext context) => const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.checkroom_outlined,
+                  color: AppColors.azure57, size: 44),
+              SizedBox(height: 12),
+              Text(
+                'Belum ada Mix & Match tersimpan.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppColors.azureMartinique,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              SizedBox(height: 5),
+              Text(
+                'Buat outfit terlebih dahulu dari menu Mix & Match.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppColors.azureDolphin, fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+      );
+}
+
+class _PickerError extends StatelessWidget {
+  const _PickerError({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: AppColors.pillWashingBg,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                message,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppColors.azureMartinique,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+            IconButton(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh_rounded),
+              color: AppColors.azureSanMarino,
+              tooltip: 'Coba lagi',
+            ),
+          ],
+        ),
       );
 }
